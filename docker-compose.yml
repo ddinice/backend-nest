@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/build.Dockerfile
+      target: prod
+    env_file:
+      - .env.dev
+    environment:
+      DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+      - public
+    ports: ["8080:3000"]
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/jobs.Dockerfile
+      target: jobs
+    env_file:
+      - .env.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+    command: npm run migration:run
+    restart: "no"
+    profiles: ["jobs"]
+    networks:
+      - internal
+  
+  seed:
+    build:
+      context: .
+      dockerfile: docker/jobs.Dockerfile
+      target: jobs
+    env_file:
+      - .env.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: postgres
+    command: npm run db:seed
+    restart: "no"
+    profiles: ["jobs"]
+    networks:
+      - internal
+
+volumes:
+  pgdata:
+
+networks:
+  internal:
+    internal: true
+  public:
+  

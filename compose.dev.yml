@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/build.Dockerfile
+      target: deps
+    command: npm run start:dev
+    env_file:
+      - .env.dev
+    environment:
+      NODE_ENV: dev
+      DB_HOST: postgres
+    volumes:
+      - ./:/workspace
+      - api_node_modules:/workspace/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  api_node_modules:
