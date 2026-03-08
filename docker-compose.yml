@@ -1,0 +1,52 @@
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: lesson11-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}"]
+      interval: 10s
+      retries: 5
+    volumes:
+       - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: lesson11-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_ERLANG_COOKIE: LESSON11RABBITMQCOOKIEVALUE1234567890
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - ./rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - internal
+
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - db
+  #     - rabbitmq
+  #   networks:
+  #     - internal
+
+volumes:
+  pgdata_lesson11_queues_outbox:
+  rabbitmq-data:
+
+networks:
+  internal:
+    driver: bridge
