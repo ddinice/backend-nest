@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
@@ -17,6 +17,8 @@ export type CreateOrderItemInput = {
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(Order)
@@ -93,7 +95,11 @@ export class OrdersService {
       eventName: 'orders.process.requested'
     }
 
-    this.rabbitmqService.publishToExchange(ORDERS_EXCHANGE, ORDERS_PROCESS_ROUTING_KEY, message, {
+    const published = this.rabbitmqService.publishToExchange(
+      ORDERS_EXCHANGE,
+      ORDERS_PROCESS_ROUTING_KEY,
+      message,
+      {
       messageId: message.messageId,
       correlationId: message.correlationId,
       headers: {
@@ -101,7 +107,17 @@ export class OrdersService {
         orderId: message.orderId,
         attempt: message.attempt
       }
-    });
+      }
+    );
+
+    if (!published) {
+      this.logger.error(
+        `Failed to publish order processing message: orderId=${created.id} messageId=${message.messageId}`
+      );
+      throw new ServiceUnavailableException(
+        'Order was created but not queued for processing. Please retry later.'
+      );
+    }
 
     return created;
   }

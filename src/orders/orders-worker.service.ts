@@ -240,8 +240,10 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
     const raw = this.configService.get<string>('ORDERS_WORKER_FAIL_ON_ATTEMPTS') ?? '';
     const failingAttempts = raw
       .split(',')
-      .map((value) => Number(value.trim()))
-      .filter((value) => Number.isFinite(value));
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0)
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value >= 0);
 
     if (failingAttempts.includes(attempt)) {
       throw new Error(`Forced failure for attempt=${attempt}`);

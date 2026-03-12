@@ -44,7 +44,7 @@ Key RabbitMQ/worker settings:
 - `ORDERS_MAX_ATTEMPTS` - max processing attempts (default `3`)
 - `ORDERS_RETRY_DELAY_MS` - retry delays in milliseconds (comma-separated; default `5000,15000,30000`)
 - `ORDERS_WORKER_SIMULATED_DELAY_MS` - optional processing delay simulation
-- `ORDERS_WORKER_FAIL_ON_ATTEMPTS` - for demo/testing retries (`0,1,2`, etc.)
+- `ORDERS_WORKER_FAIL_ON_ATTEMPTS` - for demo/testing retries (`0,1,2`, etc.); leave empty to disable forced failures
 
 ## 3) RabbitMQ topology
 
@@ -149,7 +149,7 @@ Use RabbitMQ Management UI: [http://localhost:15673](http://localhost:15673) (`g
 
 ### 8.1 Happy path
 
-1. Ensure `ORDERS_WORKER_FAIL_ON_ATTEMPTS=` (empty)
+1. Ensure `ORDERS_WORKER_FAIL_ON_ATTEMPTS=` (empty) or unset variable
 2. `POST /orders` -> order stored as `PENDING`
 3. Worker consumes and updates order to `PROCESSED`
 
