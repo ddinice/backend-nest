@@ -1,0 +1,7 @@
+type User {
+  id: ID!
+  email: String!
+  orders: [Order!]!
+  createdAt: String!
+  updatedAt: String!
+}

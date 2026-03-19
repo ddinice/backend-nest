@@ -1,0 +1,9 @@
+type Product {
+  id: ID!
+  title: String!
+  price: Float!
+  isActive: Boolean!
+  stock: Int!
+  createdAt: String!
+  updatedAt: String!
+}

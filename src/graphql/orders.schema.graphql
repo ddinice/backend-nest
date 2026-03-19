@@ -1,0 +1,106 @@
+# ─── Enums ────────────────────────────────────────────
+
+enum OrderStatus {
+  CREATED
+  PAID
+  CANCELLED
+}
+
+# Product type defined in products.schema.graphql
+
+# ─── Domain types (DataLoader) ────────────────────────
+
+type OrderItem {
+  id: ID!
+  quantity: Int!
+  priceAtPurchase: Float!
+  product: Product!
+}
+
+type Order {
+  id: ID!
+  status: OrderStatus!
+  createdAt: String!
+  userId: ID!
+  items: [OrderItem!]!
+}
+
+# ─── Naive types (N+1 — for demonstration) ────────────
+
+type OrderItemNaive {
+  id: ID!
+  quantity: Int!
+  priceAtPurchase: Float!
+  product: Product!
+}
+
+type OrderNaive {
+  id: ID!
+  status: OrderStatus!
+  createdAt: String!
+  userId: ID!
+  items: [OrderItemNaive!]!
+}
+
+type OrdersNaiveConnection {
+  nodes: [OrderNaive!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+# ─── Pagination wrapper ──────────────────────────────
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type OrdersConnection {
+  nodes: [Order!]!
+  totalCount: Int!
+  pageInfo: PageInfo!
+}
+
+# ─── Input types ──────────────────────────────────────
+
+input OrdersFilterInput {
+  status: OrderStatus
+  dateFrom: String
+  dateTo: String
+}
+
+input OrdersPaginationInput {
+  limit: Int
+  offset: Int
+}
+
+input OrderItemInput {
+  productId: ID!
+  quantity: Int!
+}
+
+input CreateOrderInput {
+  userId: ID!
+  idempotencyKey: String!
+  items: [OrderItemInput!]!
+}
+
+# ─── Queries & Mutations ─────────────────────────────
+
+type Query {
+  """
+  Orders with DataLoader — batched product resolution.
+  Check server logs: expect 2 SQL queries total.
+  """
+  orders(filter: OrdersFilterInput, pagination: OrdersPaginationInput): OrdersConnection!
+
+  """
+  Orders WITHOUT DataLoader — N+1 problem.
+  Check server logs: expect 1 + N SQL queries (one per order item).
+  """
+  ordersNaive(filter: OrdersFilterInput, pagination: OrdersPaginationInput): OrdersNaiveConnection!
+}
+
+type Mutation {
+  createOrder(input: CreateOrderInput!): Order!
+}
