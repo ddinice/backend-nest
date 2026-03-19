@@ -19,9 +19,9 @@ services:
     build:
       context: .
       dockerfile: docker/build.Dockerfile
-      target: prod
+      target: prod-distroless
     env_file:
-      - .env.dev
+      - .env.example
     environment:
       DB_HOST: postgres
     depends_on:
@@ -37,13 +37,15 @@ services:
       context: .
       dockerfile: docker/jobs.Dockerfile
       target: jobs
-    env_file:
-      - .env.dev
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DB_HOST: postgres
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      DB_NAME: ${DB_NAME:-postgres}
     command: npm run migration:run
     restart: "no"
     profiles: ["jobs"]
@@ -55,15 +57,17 @@ services:
       context: .
       dockerfile: docker/jobs.Dockerfile
       target: jobs
-    env_file:
-      - .env.dev
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_HOST: postgres
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      DB_NAME: ${DB_NAME:-postgres}
     command: npm run db:seed
     restart: "no"
     profiles: ["jobs"]

@@ -1,10 +1,15 @@
 node_modules
+README.md
+*.yml
+docker
+settings.json
+.gitignore
+eslint.config.mjs
 
 *.log
 
 .env
 .env.*
-!.env.example
 
 /dist
 
@@ -20,5 +25,12 @@ coverage
 Dockerfile*
 .dockerignore
 
+src/seed
+src/migrations
+src/test
+src/.DS_Store
+
 !package.json
 !package-lock.json
+!.env.dev
+!.env.example

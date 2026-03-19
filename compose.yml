@@ -19,11 +19,13 @@ services:
     build:
       context: .
       dockerfile: docker/build.Dockerfile
-      target: prod
+      target: prod-distroless
     env_file:
-      - .env.dev
+      - .env.example
     environment:
+      NODE_ENV: example
       DB_HOST: postgres
+      DB_PORT: 5432
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,12 +41,14 @@ services:
       dockerfile: docker/jobs.Dockerfile
       target: jobs
     env_file:
-      - .env.dev
+      - .env.example
     depends_on:
       postgres:
         condition: service_healthy
     environment:
+      NODE_ENV: example
       DB_HOST: postgres
+      DB_PORT: 5432
     command: npm run migration:run
     restart: "no"
     profiles:
@@ -58,14 +62,16 @@ services:
       dockerfile: docker/jobs.Dockerfile
       target: jobs
     env_file:
-      - .env.dev
+      - .env.example
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
     environment:
+      NODE_ENV: example
       DB_HOST: postgres
+      DB_PORT: 5432
     command: npm run db:seed
     restart: "no"
     profiles:
