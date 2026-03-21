@@ -1,4 +1,12 @@
-import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min
+} from 'class-validator';
 
 export class AuthorizeOrderDto {
   @IsString()
@@ -21,4 +29,10 @@ export class AuthorizeOrderDto {
   @IsOptional()
   @IsBoolean()
   simulateUnavailableOnce?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10000)
+  simulateAuthorizeDelayMs?: number;
 }

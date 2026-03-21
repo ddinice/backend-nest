@@ -11,12 +11,14 @@ export class PaymentsGrpcController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @GrpcMethod(PAYMENTS_SERVICE_NAME, 'Authorize')
-  authorize(payload: {
+  async authorize(payload: {
     orderId: string;
     total: { amount: string; currency: string };
     idempotencyKey?: string;
     paymentMethod?: string;
     simulateUnavailableOnce?: boolean;
+    simulateAuthorizeDelayMs?: number;
+    simulate_authorize_delay_ms?: number;
   }) {
     if (!payload.orderId) {
       throw new RpcException({
@@ -31,6 +33,18 @@ export class PaymentsGrpcController {
         code: GrpcStatus.INVALID_ARGUMENT,
         message: 'amount must be > 0'
       });
+    }
+
+    const delayMs = Math.min(
+      Number(
+        payload.simulateAuthorizeDelayMs ??
+          payload.simulate_authorize_delay_ms ??
+          0
+      ),
+      10_000
+    );
+    if (delayMs > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
     }
 
     if (

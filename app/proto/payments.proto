@@ -30,6 +30,8 @@ message AuthorizeRequest {
   string idempotency_key = 4;
   string payment_method = 5;
   bool simulate_unavailable_once = 6;
+  // Dev/test: delay before responding (to exercise client deadline / RxJS timeout path).
+  uint32 simulate_authorize_delay_ms = 7;
 }
 
 message AuthorizeResponse {

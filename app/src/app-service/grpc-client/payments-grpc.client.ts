@@ -18,7 +18,8 @@ import {
   retry,
   throwError,
   timeout,
-  timer
+  timer,
+  TimeoutError
 } from 'rxjs';
 import { PAYMENTS_SERVICE_NAME } from '../../constants/grpc.constants';
 import { AuthorizeRequest, AuthorizeResponse, GetPaymentStatusResponse, PaymentsGrpcService } from './interfaces/payments.interface';
@@ -110,6 +111,12 @@ export class PaymentsGrpcClient implements OnModuleInit {
   }
 
   private mapGrpcError(error: unknown): Error {
+    if (error instanceof TimeoutError) {
+      return new GatewayTimeoutException(
+        `Payments timeout: ${error.message}`
+      );
+    }
+
     const code = (error as { code?: number })?.code;
     const details = (error as { details?: string; message?: string })?.details ??
       (error as { message?: string })?.message ??

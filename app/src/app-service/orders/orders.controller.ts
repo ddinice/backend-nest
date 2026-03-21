@@ -55,6 +55,7 @@ export class OrdersController {
       idempotencyKey: dto.idempotencyKey ?? randomUUID(),
       paymentMethod: dto.paymentMethod,
       simulateUnavailableOnce: dto.simulateUnavailableOnce,
+      simulateAuthorizeDelayMs: dto.simulateAuthorizeDelayMs,
     });
 
     await this.ordersService.markOrderPaymentResult(orderId, payment);

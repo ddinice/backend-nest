@@ -36,6 +36,24 @@ Important variables:
 
 ## 3. Run locally
 
+All Nest/npm commands below are run from the **`app/`** directory (the workspace that contains `package.json` and `proto/`):
+
+```bash
+cd app
+```
+
+### 3.1 Start Postgres
+
+From the **repository root** (parent of `app/`, where `docker-compose.yml` lives):
+
+```bash
+docker compose up -d db
+```
+
+This maps host port **5433** to Postgres (see `docker-compose.yml`). The app expects `DB_PORT=5433` in `.env.dev` (see `.env.example`).
+
+### 3.2 Install and migrate
+
 Install dependencies:
 
 ```bash
@@ -95,6 +113,33 @@ Expected response:
 - `paymentId`
 - `status` (typically `PAYMENT_STATUS_AUTHORIZED`)
 
+## 4.1 Timeout / deadline path (slow Payments)
+
+To hit the **client deadline** path (RxJS `timeout` on the gRPC call → **504 Gateway Timeout** with `Payments timeout: ...`), make the payment service slower than `PAYMENTS_GRPC_TIMEOUT_MS` on the app side.
+
+1. Start **payment-service** and **app-service** as usual (two terminals, both from `app/` with `NODE_ENV=dev`).
+
+2. In the app-service environment, set a **short** deadline (example: 200 ms):
+
+   ```bash
+   PAYMENTS_GRPC_TIMEOUT_MS=200 NODE_ENV=dev npm run start:app-service
+   ```
+
+3. Call pay with an artificial delay on the **Authorize** handler (field `simulateAuthorizeDelayMs` in the JSON body, forwarded over gRPC as `simulate_authorize_delay_ms`):
+
+   ```bash
+   curl -sS -X POST "http://localhost:3022/orders/<ORDER_ID>/pay" \
+     -H "content-type: application/json" \
+     -d '{
+       "amount":"100.00",
+       "currency":"USD",
+       "paymentMethod":"card",
+       "simulateAuthorizeDelayMs": 800
+     }'
+   ```
+
+Expected: **504** and a message containing `Payments timeout` (this is the **deadline/timeout** path, not `UNAVAILABLE` from `simulateUnavailableOnce`).
+
 ## 5. Where proto is connected
 
 - gRPC server: `src/payment-service/main.ts` (`Transport.GRPC`, `proto/payments.proto`)
@@ -106,3 +151,14 @@ Expected response:
 - `GetPaymentStatus` returns data from in-memory store in `payment-service` (not mocked from thin air).
 - `Capture` and `Refund` are declared and implemented as stubs for now.
 - After successful `Authorize`, `app-service` updates order status to `PAID` and upserts a row in DB table `payments`.
+- If a host port for gRPC is already in use (for example another container), point both services at a free port via `.env.dev`: set `PAYMENTS_GRPC_URL` (e.g. `localhost:22971` for the client) and `PAYMENTS_GRPC_BIND_URL` (e.g. `0.0.0.0:22971` for the payment server bind).
+
+## 7. E2E test (Orders → Payments.Authorize)
+
+From `app/`:
+
+```bash
+npm run test:e2e
+```
+
+The suite `test/orders-pay.e2e-spec.ts` runs **POST /orders** and **POST /orders/:id/pay** against the real HTTP stack (`ValidationPipe`, `OrdersController`). The database is not required: `OrdersService` and `PaymentsGrpcClient` are replaced with mocks; the mock `PaymentsGrpcClient` asserts the **Authorize** contract (order id, totals, payment method) and a successful authorize response is returned.

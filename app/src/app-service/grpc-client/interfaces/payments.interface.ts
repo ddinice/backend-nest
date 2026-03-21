@@ -9,6 +9,7 @@ export interface AuthorizeRequest {
   idempotencyKey?: string;
   paymentMethod?: string;
   simulateUnavailableOnce?: boolean;
+  simulateAuthorizeDelayMs?: number;
 }
 
 export interface AuthorizeResponse {
