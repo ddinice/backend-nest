@@ -17,11 +17,21 @@ This project implements a reliable async order-processing flow:
 
 ### Start infrastructure
 
+Postgres and RabbitMQ are defined in `docker-compose.yml`. From the project root:
+
 ```bash
-docker compose up -d rabbitmq
+docker compose up -d
 ```
 
-If you need DB from Docker too, uncomment the `db` service in `docker-compose.yml` and run `docker compose up -d`.
+This publishes Postgres and RabbitMQ on **host** ports (defaults below). Override them in a root `.env` if they clash with other stacks:
+
+| Variable | Default | Container |
+| --- | --- | --- |
+| `POSTGRES_HOST_PORT` | `5432` | `5432` (Postgres) |
+| `RABBITMQ_AMQP_HOST_PORT` | `5673` | `5672` (AMQP) |
+| `RABBITMQ_MANAGEMENT_HOST_PORT` | `15673` | `15672` (management UI) |
+
+When Nest runs **on the host**, set `DB_HOST=localhost`, `DB_PORT` to the same value as `POSTGRES_HOST_PORT`, and point `RABBITMQ_URL` at `localhost` and `RABBITMQ_AMQP_HOST_PORT`. See `.env.example` and `.env.recheck` for a consistent example.
 
 ### Install and start API+worker
 
@@ -35,7 +45,7 @@ The worker is part of the same Nest app (`OrdersWorkerService`) and starts autom
 
 ## 2) Environment variables
 
-Copy `.env.example` to `.env.dev` and adjust if needed.
+Copy `.env.example` to `.env.dev` (or `.env`) and adjust if needed. For a ready-made host-to-compose wiring checklist, see `.env.recheck`.
 
 Key RabbitMQ/worker settings:
 
@@ -145,7 +155,7 @@ Worker logs include:
 
 ## 8) Demo scenarios
 
-Use RabbitMQ Management UI: [http://localhost:15673](http://localhost:15673) (`guest`/`guest`)
+Use RabbitMQ Management UI: `http://localhost:<RABBITMQ_MANAGEMENT_HOST_PORT>` (default [http://localhost:15673](http://localhost:15673) if you use compose defaults; `guest`/`guest` unless overridden).
 
 ### 8.1 Happy path
 

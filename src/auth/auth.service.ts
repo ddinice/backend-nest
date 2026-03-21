@@ -7,25 +7,28 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor (
+  constructor(
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService) {
-  }
-  async login(dto: LoginDto): Promise<{ accessToken: string }>{
+    private readonly usersService: UsersService,
+  ) {}
+  async login(dto: LoginDto): Promise<{ accessToken: string }> {
     const user = await this.usersService.findByEmailSelectPassword(dto.email);
-    console.log('user', user);
-    
+
     if (!user?.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    
+
     const isPassMatch = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!isPassMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload: JwtPayload = { sub: user.id, email: user.email, roles: user.roles ?? [] };
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      roles: user.roles ?? [],
+    };
     const accessToken = await this.jwtService.signAsync(payload);
 
     return { accessToken };
