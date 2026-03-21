@@ -1,8 +1,16 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('processed_messages')
 @Index('IDX_processed_messages_order_id', ['orderId'])
-@Index('IDX_processed_messages_message_id_unique', ['messageId'], { unique: true })
+@Index('IDX_processed_messages_message_id_unique', ['messageId'], {
+  unique: true,
+})
 export class ProcessedMessage {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -4,7 +4,7 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Order } from './order.entity';
 import { Product } from '../../products/product.entity';
@@ -24,7 +24,9 @@ export class OrderItem {
 
   @Column({ type: 'uuid', name: 'product_id' })
   productId: string;
-  @ManyToOne(() => Product, (product) => product.orderItems, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Product, (product) => product.orderItems, {
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'product_id' })
   product: Product;
 

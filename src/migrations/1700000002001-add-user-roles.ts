@@ -5,7 +5,7 @@ export class AddUserRoles1700000002001 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      'ALTER TABLE "users" ADD COLUMN "roles" text[] NOT NULL DEFAULT ARRAY[]::text[]'
+      'ALTER TABLE "users" ADD COLUMN "roles" text[] NOT NULL DEFAULT ARRAY[]::text[]',
     );
   }
 
@@ -13,4 +13,3 @@ export class AddUserRoles1700000002001 implements MigrationInterface {
     await queryRunner.query('ALTER TABLE "users" DROP COLUMN "roles"');
   }
 }
-

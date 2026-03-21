@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { QueryFailedError } from 'typeorm';
 import type { ConsumeMessage } from 'amqplib';
@@ -11,20 +16,22 @@ import {
   ORDERS_DLQ_ROUTING_KEY,
   ORDERS_EXCHANGE,
   ORDERS_PROCESS_QUEUE,
-  ORDERS_RETRY_ROUTING_KEYS
+  ORDERS_RETRY_ROUTING_KEYS,
 } from 'src/rabbitmq/rabbitmq.constants';
 
 type ProcessingResult = 'success' | 'duplicate';
 
 @Injectable()
-export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDestroy {
+export class OrdersWorkerService
+  implements OnApplicationBootstrap, OnModuleDestroy
+{
   private readonly logger = new Logger(OrdersWorkerService.name);
   private consumerTag: string | null = null;
 
   constructor(
     private readonly rabbitmqService: RabbitmqService,
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -34,7 +41,7 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
       (msg) => {
         void this.handleMessage(msg);
       },
-      { noAck: false }
+      { noAck: false },
     );
     this.consumerTag = consumerTag;
     this.logger.log(`Worker is consuming ${ORDERS_PROCESS_QUEUE} (manual ack)`);
@@ -66,31 +73,35 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
       const result = await this.processMessage(parsedMessage);
       ch.ack(msg);
       this.logger.log(
-        `result=${result} messageId=${parsedMessage.messageId} orderId=${parsedMessage.orderId} attempt=${parsedMessage.attempt}`
+        `result=${result} messageId=${parsedMessage.messageId} orderId=${parsedMessage.orderId} attempt=${parsedMessage.attempt}`,
       );
     } catch (error) {
       try {
         await this.handleFailure(msg, parsedMessage, error);
       } catch (retryError) {
-        const reason = retryError instanceof Error ? retryError.message : String(retryError);
+        const reason =
+          retryError instanceof Error ? retryError.message : String(retryError);
         this.logger.error(
-          `result=nack messageId=${parsedMessage.messageId} orderId=${parsedMessage.orderId} attempt=${parsedMessage.attempt} reason=${reason}`
+          `result=nack messageId=${parsedMessage.messageId} orderId=${parsedMessage.orderId} attempt=${parsedMessage.attempt} reason=${reason}`,
         );
         ch.nack(msg, false, true);
       }
     }
   }
 
-  private async processMessage(message: OrdersProcessMessage): Promise<ProcessingResult> {
+  private async processMessage(
+    message: OrdersProcessMessage,
+  ): Promise<ProcessingResult> {
     return this.dataSource.transaction(async (manager) => {
-      const processedMessagesRepository = manager.getRepository(ProcessedMessage);
+      const processedMessagesRepository =
+        manager.getRepository(ProcessedMessage);
       const ordersRepository = manager.getRepository(Order);
 
       try {
         await processedMessagesRepository.insert({
           messageId: message.messageId,
           orderId: message.orderId,
-          handler: ORDERS_PROCESS_QUEUE
+          handler: ORDERS_PROCESS_QUEUE,
         });
       } catch (error) {
         if (this.isUniqueViolation(error)) {
@@ -99,7 +110,9 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
         throw error;
       }
 
-      const order = await ordersRepository.findOne({ where: { id: message.orderId } });
+      const order = await ordersRepository.findOne({
+        where: { id: message.orderId },
+      });
       if (!order) {
         throw new Error('Order not found');
       }
@@ -118,7 +131,7 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
   private async handleFailure(
     originalMessage: ConsumeMessage,
     message: OrdersProcessMessage,
-    error: unknown
+    error: unknown,
   ): Promise<void> {
     const ch = this.rabbitmqService.getChannel();
     const errorReason = error instanceof Error ? error.message : String(error);
@@ -127,7 +140,10 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
 
     if (nextAttempt < maxAttempts) {
       const retryRoutingKey = this.getRetryRoutingKey(nextAttempt);
-      const retryMessage: OrdersProcessMessage = { ...message, attempt: nextAttempt };
+      const retryMessage: OrdersProcessMessage = {
+        ...message,
+        attempt: nextAttempt,
+      };
       const published = this.rabbitmqService.publishToExchange(
         ORDERS_EXCHANGE,
         retryRoutingKey,
@@ -138,9 +154,9 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
           headers: {
             messageId: message.messageId,
             orderId: message.orderId,
-            attempt: nextAttempt
-          }
-        }
+            attempt: nextAttempt,
+          },
+        },
       );
 
       if (!published) {
@@ -149,7 +165,7 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
 
       ch.ack(originalMessage);
       this.logger.warn(
-        `result=retry messageId=${message.messageId} orderId=${message.orderId} attempt=${message.attempt} nextAttempt=${nextAttempt} reason=${errorReason}`
+        `result=retry messageId=${message.messageId} orderId=${message.orderId} attempt=${message.attempt} nextAttempt=${nextAttempt} reason=${errorReason}`,
       );
       return;
     }
@@ -160,7 +176,7 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
       {
         ...message,
         errorReason,
-        failedAt: new Date().toISOString()
+        failedAt: new Date().toISOString(),
       },
       {
         messageId: message.messageId,
@@ -168,9 +184,9 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
         headers: {
           messageId: message.messageId,
           orderId: message.orderId,
-          attempt: message.attempt
-        }
-      }
+          attempt: message.attempt,
+        },
+      },
     );
 
     if (!dlqPublished) {
@@ -179,13 +195,15 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
 
     ch.ack(originalMessage);
     this.logger.error(
-      `result=dlq messageId=${message.messageId} orderId=${message.orderId} attempt=${message.attempt} reason=${errorReason}`
+      `result=dlq messageId=${message.messageId} orderId=${message.orderId} attempt=${message.attempt} reason=${errorReason}`,
     );
   }
 
   private parseMessage(msg: ConsumeMessage): OrdersProcessMessage | null {
     try {
-      const parsed = JSON.parse(msg.content.toString('utf-8')) as Partial<OrdersProcessMessage>;
+      const parsed = JSON.parse(
+        msg.content.toString('utf-8'),
+      ) as Partial<OrdersProcessMessage>;
       if (
         !parsed ||
         typeof parsed.messageId !== 'string' ||
@@ -202,7 +220,7 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
         createdAt: parsed.createdAt,
         correlationId: parsed.correlationId,
         producer: parsed.producer,
-        eventName: parsed.eventName
+        eventName: parsed.eventName,
       };
     } catch {
       return null;
@@ -217,17 +235,25 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
   }
 
   private getMaxAttempts(): number {
-    const value = Number(this.configService.get<string>('ORDERS_MAX_ATTEMPTS') ?? '3');
+    const value = Number(
+      this.configService.get<string>('ORDERS_MAX_ATTEMPTS') ?? '3',
+    );
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : 3;
   }
 
   private getRetryRoutingKey(nextAttempt: number): string {
-    const index = Math.max(0, Math.min(nextAttempt - 1, ORDERS_RETRY_ROUTING_KEYS.length - 1));
+    const index = Math.max(
+      0,
+      Math.min(nextAttempt - 1, ORDERS_RETRY_ROUTING_KEYS.length - 1),
+    );
     return ORDERS_RETRY_ROUTING_KEYS[index];
   }
 
   private async simulateDelay(): Promise<void> {
-    const delayMs = Number(this.configService.get<string>('ORDERS_WORKER_SIMULATED_DELAY_MS') ?? '250');
+    const delayMs = Number(
+      this.configService.get<string>('ORDERS_WORKER_SIMULATED_DELAY_MS') ??
+        '250',
+    );
     if (!Number.isFinite(delayMs) || delayMs <= 0) {
       return;
     }
@@ -237,7 +263,8 @@ export class OrdersWorkerService implements OnApplicationBootstrap, OnModuleDest
   }
 
   private maybeForceFailure(attempt: number): void {
-    const raw = this.configService.get<string>('ORDERS_WORKER_FAIL_ON_ATTEMPTS') ?? '';
+    const raw =
+      this.configService.get<string>('ORDERS_WORKER_FAIL_ON_ATTEMPTS') ?? '';
     const failingAttempts = raw
       .split(',')
       .map((value) => value.trim())

@@ -10,4 +10,3 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 }
-

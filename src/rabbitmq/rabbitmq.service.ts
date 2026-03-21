@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Channel, ChannelModel, Options } from 'amqplib';
 import * as amqp from 'amqplib';
@@ -8,7 +13,7 @@ import {
   ORDERS_EXCHANGE,
   ORDERS_PROCESS_QUEUE,
   ORDERS_PROCESS_ROUTING_KEY,
-  ORDERS_RETRY_ROUTING_KEYS
+  ORDERS_RETRY_ROUTING_KEYS,
 } from './rabbitmq.constants';
 
 @Injectable()
@@ -20,7 +25,9 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit(): Promise<void> {
     const url = this.configService.getOrThrow<string>('RABBITMQ_URL');
-    const prefetch = Number(this.configService.get<string>('RABBITMQ_PREFETCH') ?? '10');
+    const prefetch = Number(
+      this.configService.get<string>('RABBITMQ_PREFETCH') ?? '10',
+    );
 
     const client = await amqp.connect(url);
     const ch = await client.createChannel();
@@ -43,7 +50,11 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  publishToQueue(queueName: string, message: any, headers: Record<string, any>): boolean {
+  publishToQueue(
+    queueName: string,
+    message: any,
+    headers: Record<string, any>,
+  ): boolean {
     const channel = this.getChannel();
     const body = Buffer.from(JSON.stringify(message));
 
@@ -54,7 +65,7 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
     exchange: string,
     routingKey: string,
     message: unknown,
-    options?: Options.Publish
+    options?: Options.Publish,
   ): boolean {
     const channel = this.getChannel();
     const body = Buffer.from(JSON.stringify(message));
@@ -62,7 +73,7 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
     return channel.publish(exchange, routingKey, body, {
       persistent: true,
       contentType: 'application/json',
-      ...options
+      ...options,
     });
   }
 
@@ -80,8 +91,16 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
     await ch.assertExchange(ORDERS_EXCHANGE, 'direct', { durable: true });
     await ch.assertQueue(ORDERS_PROCESS_QUEUE, { durable: true });
     await ch.assertQueue(ORDERS_DLQ_QUEUE, { durable: true });
-    await ch.bindQueue(ORDERS_PROCESS_QUEUE, ORDERS_EXCHANGE, ORDERS_PROCESS_ROUTING_KEY);
-    await ch.bindQueue(ORDERS_DLQ_QUEUE, ORDERS_EXCHANGE, ORDERS_DLQ_ROUTING_KEY);
+    await ch.bindQueue(
+      ORDERS_PROCESS_QUEUE,
+      ORDERS_EXCHANGE,
+      ORDERS_PROCESS_ROUTING_KEY,
+    );
+    await ch.bindQueue(
+      ORDERS_DLQ_QUEUE,
+      ORDERS_EXCHANGE,
+      ORDERS_DLQ_ROUTING_KEY,
+    );
 
     for (let idx = 0; idx < ORDERS_RETRY_ROUTING_KEYS.length; idx += 1) {
       const routingKey = ORDERS_RETRY_ROUTING_KEYS[idx];
@@ -91,8 +110,8 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
         arguments: {
           'x-message-ttl': ttl,
           'x-dead-letter-exchange': ORDERS_EXCHANGE,
-          'x-dead-letter-routing-key': ORDERS_PROCESS_ROUTING_KEY
-        }
+          'x-dead-letter-routing-key': ORDERS_PROCESS_ROUTING_KEY,
+        },
       });
       await ch.bindQueue(routingKey, ORDERS_EXCHANGE, routingKey);
     }
@@ -104,7 +123,9 @@ export class RabbitmqService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getRetryDelaysMs(): number[] {
-    const raw = this.configService.get<string>('ORDERS_RETRY_DELAY_MS') ?? '5000,15000,30000';
+    const raw =
+      this.configService.get<string>('ORDERS_RETRY_DELAY_MS') ??
+      '5000,15000,30000';
     const parsed = raw
       .split(',')
       .map((value) => Number(value.trim()))

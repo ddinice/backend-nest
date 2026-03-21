@@ -5,7 +5,7 @@ export class AddOrderProcessingIdempotency1700000004000 implements MigrationInte
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "processed_at" timestamptz NULL`
+      `ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "processed_at" timestamptz NULL`,
     );
 
     await queryRunner.query(
@@ -16,16 +16,18 @@ export class AddOrderProcessingIdempotency1700000004000 implements MigrationInte
         "handler" varchar(100),
         "processed_at" timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT "IDX_processed_messages_message_id_unique" UNIQUE ("message_id")
-      )`
+      )`,
     );
 
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS "IDX_processed_messages_order_id" ON "processed_messages" ("order_id")`
+      `CREATE INDEX IF NOT EXISTS "IDX_processed_messages_order_id" ON "processed_messages" ("order_id")`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS "processed_messages"`);
-    await queryRunner.query(`ALTER TABLE "orders" DROP COLUMN IF EXISTS "processed_at"`);
+    await queryRunner.query(
+      `ALTER TABLE "orders" DROP COLUMN IF EXISTS "processed_at"`,
+    );
   }
 }

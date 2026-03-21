@@ -11,8 +11,17 @@ import { ProcessedMessage } from './entities/processed-message.entity';
 import { OrdersWorkerService } from './orders-worker.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem, Product, User, ProcessedMessage]), RabbitmqModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      Order,
+      OrderItem,
+      Product,
+      User,
+      ProcessedMessage,
+    ]),
+    RabbitmqModule,
+  ],
   controllers: [OrdersController],
   providers: [OrdersService, OrdersWorkerService],
 })
-export class OrdersModule { }
+export class OrdersModule {}

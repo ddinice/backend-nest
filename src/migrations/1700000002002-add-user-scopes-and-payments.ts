@@ -5,11 +5,11 @@ export class AddUserScopesAndPayments1700000002002 implements MigrationInterface
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      'ALTER TABLE "users" ADD COLUMN "scopes" text[] NOT NULL DEFAULT ARRAY[]::text[]'
+      'ALTER TABLE "users" ADD COLUMN "scopes" text[] NOT NULL DEFAULT ARRAY[]::text[]',
     );
 
     await queryRunner.query(
-      "CREATE TYPE \"payments_status_enum\" AS ENUM ('UNPAID', 'PENDING', 'PAID', 'FAILED', 'REFUNDED')"
+      "CREATE TYPE \"payments_status_enum\" AS ENUM ('UNPAID', 'PENDING', 'PAID', 'FAILED', 'REFUNDED')",
     );
 
     await queryRunner.query(`
@@ -31,4 +31,3 @@ export class AddUserScopesAndPayments1700000002002 implements MigrationInterface
     await queryRunner.query('ALTER TABLE "users" DROP COLUMN "scopes"');
   }
 }
-

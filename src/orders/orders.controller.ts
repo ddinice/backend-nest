@@ -1,4 +1,15 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 // import { Roles } from '../auth/roles.decorator';
 // import { RolesGuard } from '../auth/roles.guard';
 // import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,7 +32,10 @@ export class OrdersController {
 
   @Roles('admin', 'support', 'user')
   @Post()
-  async create(@Req() req: Request & { user?: any }, @Body() body: CreateOrderBody) {
+  async create(
+    @Req() req: Request & { user?: any },
+    @Body() body: CreateOrderBody,
+  ) {
     const items = body?.items ?? [];
     if (!Array.isArray(items) || items.length === 0) {
       throw new BadRequestException('items must be a non-empty array');
@@ -31,7 +45,9 @@ export class OrdersController {
         throw new BadRequestException('items[].productId is required');
       }
       if (!Number.isInteger(it.quantity) || it.quantity <= 0) {
-        throw new BadRequestException('items[].quantity must be a positive integer');
+        throw new BadRequestException(
+          'items[].quantity must be a positive integer',
+        );
       }
     }
 

@@ -7,5 +7,5 @@ export const ORDERS_DLQ_ROUTING_KEY = 'orders.dlq';
 export const ORDERS_RETRY_ROUTING_KEYS = [
   'orders.retry.1',
   'orders.retry.2',
-  'orders.retry.3'
+  'orders.retry.3',
 ] as const;

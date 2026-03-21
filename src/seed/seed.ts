@@ -23,18 +23,24 @@ const usersSeed = [
   {
     email: 'alice@example.com',
     roles: ['user'],
-    scopes: ['orders:read', 'orders:write']
+    scopes: ['orders:read', 'orders:write'],
   },
   {
     email: 'bob@example.com',
     roles: ['support'],
-    scopes: ['orders:read', 'payments:read', 'payments:write']
+    scopes: ['orders:read', 'payments:read', 'payments:write'],
   },
   {
     email: 'admin@example.com',
     roles: ['admin'],
-    scopes: ['orders:read', 'orders:write', 'payments:read', 'payments:write', 'refunds:write']
-  }
+    scopes: [
+      'orders:read',
+      'orders:write',
+      'payments:read',
+      'payments:write',
+      'refunds:write',
+    ],
+  },
 ];
 
 const productsSeed = [
@@ -42,7 +48,7 @@ const productsSeed = [
   { title: 'Notebook', price: '6.50', isActive: true },
   { title: 'Desk Lamp', price: '38.00', isActive: true },
   { title: 'Mechanical Keyboard', price: '129.00', isActive: true },
-  { title: 'Wireless Mouse', price: '45.00', isActive: true }
+  { title: 'Wireless Mouse', price: '45.00', isActive: true },
 ];
 
 const ordersSeed: SeedOrder[] = [
@@ -53,14 +59,14 @@ const ordersSeed: SeedOrder[] = [
       {
         id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
         productTitle: 'Coffee Mug',
-        quantity: 2
+        quantity: 2,
       },
       {
         id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
         productTitle: 'Mechanical Keyboard',
-        quantity: 1
-      }
-    ]
+        quantity: 1,
+      },
+    ],
   },
   {
     id: '22222222-2222-2222-2222-222222222222',
@@ -69,15 +75,15 @@ const ordersSeed: SeedOrder[] = [
       {
         id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
         productTitle: 'Notebook',
-        quantity: 3
+        quantity: 3,
       },
       {
         id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
         productTitle: 'Wireless Mouse',
-        quantity: 1
-      }
-    ]
-  }
+        quantity: 1,
+      },
+    ],
+  },
 ];
 
 async function seed() {
@@ -94,22 +100,23 @@ async function seed() {
     const orderItemsRepository = dataSource.getRepository(OrderItem);
 
     const passwordHash = await bcrypt.hash('password123', 10);
-    await usersRepository.upsert(usersSeed.map((user) => ({ ...user, passwordHash })), [
-      'email'
-    ]);
+    await usersRepository.upsert(
+      usersSeed.map((user) => ({ ...user, passwordHash })),
+      ['email'],
+    );
     await productsRepository.upsert(productsSeed, ['title']);
 
     const users = await usersRepository.find({
-      where: { email: In(usersSeed.map((user) => user.email)) }
+      where: { email: In(usersSeed.map((user) => user.email)) },
     });
     const usersByEmail = new Map(users.map((user) => [user.email, user]));
 
     const productTitles = productsSeed.map((product) => product.title);
     const products = await productsRepository.find({
-      where: { title: In(productTitles) }
+      where: { title: In(productTitles) },
     });
     const productsByTitle = new Map(
-      products.map((product) => [product.title, product])
+      products.map((product) => [product.title, product]),
     );
 
     const ordersToUpsert: Array<Partial<Order>> = [];
@@ -123,7 +130,7 @@ async function seed() {
 
       ordersToUpsert.push({
         id: orderSeed.id,
-        userId: user.id
+        userId: user.id,
       });
 
       for (const item of orderSeed.items) {
@@ -137,7 +144,7 @@ async function seed() {
           orderId: orderSeed.id,
           productId: product.id,
           quantity: item.quantity,
-          priceAtPurchase: product.price
+          priceAtPurchase: product.price,
         });
       }
     }

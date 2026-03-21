@@ -5,7 +5,7 @@ import {
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { OrderItem } from '../orders/entities/order-item.entity';
 

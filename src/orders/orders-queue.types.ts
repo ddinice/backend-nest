@@ -7,4 +7,3 @@ export type OrdersProcessMessage = {
   producer?: string;
   eventName?: string;
 };
-

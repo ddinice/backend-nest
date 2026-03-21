@@ -5,7 +5,7 @@ export class AddUserPasswordHash1700000002000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      'ALTER TABLE "users" ADD COLUMN "password_hash" varchar(255)'
+      'ALTER TABLE "users" ADD COLUMN "password_hash" varchar(255)',
     );
   }
 
@@ -13,4 +13,3 @@ export class AddUserPasswordHash1700000002000 implements MigrationInterface {
     await queryRunner.query('ALTER TABLE "users" DROP COLUMN "password_hash"');
   }
 }
-

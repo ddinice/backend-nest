@@ -7,7 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
 import { OrderItem } from './order-item.entity';
@@ -17,7 +17,7 @@ export enum OrderStatus {
   PENDING = 'PENDING',
   PROCESSED = 'PROCESSED',
   PAID = 'PAID',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 @Entity('orders')
@@ -41,7 +41,7 @@ export class Order {
     type: 'enum',
     enum: OrderStatus,
     enumName: 'orders_status_enum',
-    default: OrderStatus.PENDING
+    default: OrderStatus.PENDING,
   })
   status: OrderStatus;
 

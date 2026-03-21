@@ -25,8 +25,8 @@ import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
         database: configService.getOrThrow<string>('DB_NAME'),
         autoLoadEntities: true,
         synchronize: false,
-        logging: ['query']
-      })
+        logging: ['query'],
+      }),
     }),
     OrdersModule,
     ProductsModule,

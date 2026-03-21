@@ -18,13 +18,13 @@ import { JwtStrategy } from './jwt.strategy';
         return {
           secret: configService.getOrThrow<string>('JWT_SECRET'),
           signOptions: {
-            expiresIn: expiresIn as any
-          }
+            expiresIn: expiresIn as any,
+          },
         };
-      }
+      },
     }),
     UsersModule,
-    PassportModule
+    PassportModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

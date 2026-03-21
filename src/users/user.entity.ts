@@ -5,7 +5,7 @@ import {
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { Order } from '../orders/entities/order.entity';
 
@@ -23,14 +23,14 @@ export class User {
     length: 255,
     name: 'password_hash',
     nullable: true,
-    select: false
+    select: false,
   })
   passwordHash?: string | null;
 
   @Column({
     type: 'text',
     array: true,
-    default: () => 'ARRAY[]::text[]'
+    default: () => 'ARRAY[]::text[]',
   })
   roles: string[];
 
